@@ -3,19 +3,12 @@ import requests
 from deep_translator import GoogleTranslator
 
 # -------------------- 설정값 --------------------
-# GitHub Secrets 이름과 동일해야 함
 NEWS_API_KEY = os.environ.get("40755e0674db425f8000fe376183d5b8")
 DISCORD_WEBHOOK_URL = os.environ.get("https://discordapp.com/api/webhooks/1476142173282893904/pBlnKZHRgVdlgrwUYSeK2UMt9tEpd045G8mIHwpwhAv2hDPMJSjFoXaZPumPed1cHtD1")
 TOP_N = 5
 
-
 # -------------------- 뉴스 수집 --------------------
-
 def fetch_korean_stock_news(top_n=5):
-    """
-    NewsAPI의 /v2/everything 엔드포인트를 사용해서
-    한국어 주식 관련 최신 뉴스를 검색한다.
-    """
     if not NEWS_API_KEY:
         raise RuntimeError("환경변수 NEWS_API_KEY 가 설정되어 있지 않습니다.")
 
@@ -44,19 +37,15 @@ def fetch_korean_stock_news(top_n=5):
         if not title:
             continue
 
-        news_list.append(
-            {
-                "title": title,
-                "description": desc,
-                "url": url,
-            }
-        )
+        news_list.append({
+            "title": title,
+            "description": desc,
+            "url": url,
+        })
 
     return news_list
 
-
 # -------------------- 번역 --------------------
-
 def translate_text(text: str, target_lang: str) -> str:
     if not text:
         return ""
@@ -66,25 +55,20 @@ def translate_text(text: str, target_lang: str) -> str:
         print(f"번역 오류: {e}")
         return text
 
-
 def translate_news_list(news_list, dest_lang):
     translated = []
     for item in news_list:
         t_title = translate_text(item["title"], dest_lang)
         t_desc = translate_text(item["description"], dest_lang) if item["description"] else ""
 
-        translated.append(
-            {
-                "title": t_title,
-                "description": t_desc,
-                "url": item["url"],
-            }
-        )
+        translated.append({
+            "title": t_title,
+            "description": t_desc,
+            "url": item["url"],
+        })
     return translated
 
-
 # -------------------- 메시지 만들기 --------------------
-
 def build_message(ko_news, en_news, zh_news) -> str:
     lines = []
     lines.append("**오늘의 한국 주식 TOP 5 뉴스**\n")
@@ -93,47 +77,35 @@ def build_message(ko_news, en_news, zh_news) -> str:
     lines.append("=== 🇰🇷 한국어 ===")
     for i, n in enumerate(ko_news, start=1):
         lines.append(f"{i}. {n['title']}")
-
-        desc_raw = n.get("description") or ""
-        desc = desc_raw.replace("\n", " ").strip()
+        desc = (n.get("description") or "").replace("\n", " ").strip()
         if desc:
             lines.append(f"   - 요약: {desc}")
-
         url = n.get("url") or ""
         if url:
             lines.append(f"   링크: {url}")
-
         lines.append("")
 
     # 🇺🇸 영어
     lines.append("=== 🇺🇸 English ===")
     for i, n in enumerate(en_news, start=1):
         lines.append(f"{i}. {n['title']}")
-
-        desc_raw = n.get("description") or ""
-        desc = desc_raw.replace("\n", " ").strip()
+        desc = (n.get("description") or "").replace("\n", " ").strip()
         if desc:
             lines.append(f"   - Summary: {desc}")
-
         lines.append("")
 
     # 🇨🇳 중국어
     lines.append("=== 🇨🇳 中文(简体) ===")
     for i, n in enumerate(zh_news, start=1):
         lines.append(f"{i}. {n['title']}")
-
-        desc_raw = n.get("description") or ""
-        desc = desc_raw.replace("\n", " ").strip()
+        desc = (n.get("description") or "").replace("\n", " ").strip()
         if desc:
             lines.append(f"   - 摘要: {desc}")
-
         lines.append("")
 
     return "\n".join(lines)
 
-
 # -------------------- 디스코드 전송 --------------------
-
 def send_to_discord(message: str):
     if not DISCORD_WEBHOOK_URL:
         raise RuntimeError("환경변수 DISCORD_WEBHOOK_URL 이 설정되어 있지 않습니다.")
@@ -152,7 +124,6 @@ def send_to_discord(message: str):
     if buffer.strip():
         _post_discord(buffer)
 
-
 def _post_discord(content: str):
     resp = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
     if resp.status_code not in (200, 204):
@@ -160,9 +131,7 @@ def _post_discord(content: str):
     else:
         print("디스코드 전송 성공")
 
-
 # -------------------- main --------------------
-
 def main():
     print("한국 주식 관련 Top 뉴스 수집 및 디스코드 전송 시작...")
 
@@ -178,7 +147,6 @@ def main():
     send_to_discord(message)
 
     print("작업 완료")
-
 
 if __name__ == "__main__":
     main()

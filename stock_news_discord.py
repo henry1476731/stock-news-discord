@@ -3,10 +3,11 @@ import requests
 from deep_translator import GoogleTranslator
 
 # -------------------- 설정값 --------------------
-# GitHub Actions에서 환경변수(Secrets)로 넣을 값
-NEWS_API_KEY = os.environ.get("40755e0674db425f8000fe376183d5b8")
-DISCORD_WEBHOOK_URL = os.environ.get("https://discordapp.com/api/webhooks/1476142173282893904/pBlnKZHRgVdlgrwUYSeK2UMt9tEpd045G8mIHwpwhAv2hDPMJSjFoXaZPumPed1cHtD1")
+# GitHub Secrets 이름과 동일해야 함
+NEWS_API_KEY = os.environ.get("NEWS_API_KEY")
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 TOP_N = 5
+
 
 # -------------------- 뉴스 수집 --------------------
 
@@ -26,7 +27,6 @@ def fetch_korean_stock_news(top_n=5):
     resp = requests.get(url, params=params)
     resp.raise_for_status()
     data = resp.json()
-    print("NewsAPI 응답 요약:", data.get("status"), data.get("totalResults"))
 
     articles = data.get("articles", [])
     news_list = []
@@ -49,6 +49,7 @@ def fetch_korean_stock_news(top_n=5):
 
     return news_list
 
+
 # -------------------- 번역 --------------------
 
 def translate_text(text: str, target_lang: str) -> str:
@@ -60,14 +61,12 @@ def translate_text(text: str, target_lang: str) -> str:
         print(f"번역 오류: {e}")
         return text
 
+
 def translate_news_list(news_list, dest_lang):
     translated = []
     for item in news_list:
-        ko_title = item["title"]
-        ko_desc = item["description"]
-
-        t_title = translate_text(ko_title, dest_lang)
-        t_desc = translate_text(ko_desc, dest_lang) if ko_desc else ""
+        t_title = translate_text(item["title"], dest_lang)
+        t_desc = translate_text(item["description"], dest_lang) if item["description"] else ""
 
         translated.append(
             {
@@ -78,42 +77,55 @@ def translate_news_list(news_list, dest_lang):
         )
     return translated
 
+
 # -------------------- 메시지 만들기 --------------------
 
 def build_message(ko_news, en_news, zh_news) -> str:
     lines = []
     lines.append("**오늘의 한국 주식 TOP 5 뉴스**\n")
 
-    # 한국어
+    # 🇰🇷 한국어
     lines.append("=== 🇰🇷 한국어 ===")
     for i, n in enumerate(ko_news, start=1):
         lines.append(f"{i}. {n['title']}")
-# description 안전 처리
-desc_raw = n.get("description") or ""
-desc = desc_raw.replace("\n", " ").strip()
 
-if desc:
-    lines.append(f"   - 요약: {desc}")
-            lines.append(f"   링크: {n['url']}")
+        desc_raw = n.get("description") or ""
+        desc = desc_raw.replace("\n", " ").strip()
+        if desc:
+            lines.append(f"   - 요약: {desc}")
+
+        url = n.get("url") or ""
+        if url:
+            lines.append(f"   링크: {url}")
+
         lines.append("")
 
-    # 영어
+    # 🇺🇸 영어
     lines.append("=== 🇺🇸 English ===")
     for i, n in enumerate(en_news, start=1):
         lines.append(f"{i}. {n['title']}")
-        if n["description"]:
-            lines.append(f"   - Summary: {n['description'].replace('\n', ' ').strip()}")
+
+        desc_raw = n.get("description") or ""
+        desc = desc_raw.replace("\n", " ").strip()
+        if desc:
+            lines.append(f"   - Summary: {desc}")
+
         lines.append("")
 
-    # 중국어
+    # 🇨🇳 중국어
     lines.append("=== 🇨🇳 中文(简体) ===")
     for i, n in enumerate(zh_news, start=1):
         lines.append(f"{i}. {n['title']}")
-        if n["description"]:
-            lines.append(f"   - 摘要: {n['description'].replace('\n', ' ').strip()}")
+
+        desc_raw = n.get("description") or ""
+        desc = desc_raw.replace("\n", " ").strip()
+        if desc:
+            lines.append(f"   - 摘要: {desc}")
+
         lines.append("")
 
     return "\n".join(lines)
+
 
 # -------------------- 디스코드 전송 --------------------
 
@@ -135,12 +147,14 @@ def send_to_discord(message: str):
     if buffer.strip():
         _post_discord(buffer)
 
+
 def _post_discord(content: str):
     resp = requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
     if resp.status_code not in (200, 204):
         print("디스코드 전송 실패:", resp.status_code, resp.text)
     else:
         print("디스코드 전송 성공")
+
 
 # -------------------- main --------------------
 
@@ -153,12 +167,13 @@ def main():
         return
 
     en_news = translate_news_list(ko_news, "en")
-    zh_news = translate_news_list(ko_news, "chinese (simplified)")
+    zh_news = translate_news_list(ko_news, "zh-CN")
 
     message = build_message(ko_news, en_news, zh_news)
     send_to_discord(message)
 
     print("작업 완료")
+
 
 if __name__ == "__main__":
     main()

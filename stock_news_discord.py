@@ -4,14 +4,18 @@ from deep_translator import GoogleTranslator
 
 # -------------------- 설정값 --------------------
 # GitHub Secrets 이름과 동일해야 함
-NEWS_API_KEY = os.environ.get("NEWS_API_KEY")
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+NEWS_API_KEY = os.environ.get("40755e0674db425f8000fe376183d5b8")
+DISCORD_WEBHOOK_URL = os.environ.get("https://discordapp.com/api/webhooks/1476142173282893904/pBlnKZHRgVdlgrwUYSeK2UMt9tEpd045G8mIHwpwhAv2hDPMJSjFoXaZPumPed1cHtD1")
 TOP_N = 5
 
 
 # -------------------- 뉴스 수집 --------------------
 
 def fetch_korean_stock_news(top_n=5):
+    """
+    NewsAPI의 /v2/everything 엔드포인트를 사용해서
+    한국어 주식 관련 최신 뉴스를 검색한다.
+    """
     if not NEWS_API_KEY:
         raise RuntimeError("환경변수 NEWS_API_KEY 가 설정되어 있지 않습니다.")
 
@@ -27,6 +31,7 @@ def fetch_korean_stock_news(top_n=5):
     resp = requests.get(url, params=params)
     resp.raise_for_status()
     data = resp.json()
+    print("NewsAPI 응답 요약:", data.get("status"), data.get("totalResults"))
 
     articles = data.get("articles", [])
     news_list = []

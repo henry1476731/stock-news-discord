@@ -3,8 +3,8 @@ import requests
 from deep_translator import GoogleTranslator
 
 # -------------------- 설정값 --------------------
-NEWS_API_KEY = os.environ.get("40755e0674db425f8000fe376183d5b8")
-DISCORD_WEBHOOK_URL = os.environ.get("https://discordapp.com/api/webhooks/1476142173282893904/pBlnKZHRgVdlgrwUYSeK2UMt9tEpd045G8mIHwpwhAv2hDPMJSjFoXaZPumPed1cHtD1")
+NEWS_API_KEY = os.environ.get("NEWS_API_KEY")
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 TOP_N = 5
 
 # -------------------- 뉴스 수집 --------------------

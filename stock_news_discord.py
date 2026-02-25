@@ -88,11 +88,12 @@ def build_message(ko_news, en_news, zh_news) -> str:
     lines.append("=== 🇰🇷 한국어 ===")
     for i, n in enumerate(ko_news, start=1):
         lines.append(f"{i}. {n['title']}")
-        if n["description"]:
+# description 안전 처리
 desc_raw = n.get("description") or ""
 desc = desc_raw.replace("\n", " ").strip()
-lines.append(f"   - 요약: {desc}")
-        if n["url"]:
+
+if desc:
+    lines.append(f"   - 요약: {desc}")
             lines.append(f"   링크: {n['url']}")
         lines.append("")
 
